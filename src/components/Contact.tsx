@@ -43,18 +43,27 @@ export default function Contact({ preselectedService }: { preselectedService: st
           `Message:\n${formData.message}`
         );
         
-        const mailtoUrl = `mailto:service@ironflow.com?subject=${subject}&body=${body}`;
+        // Gmail Compose URL
+        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=service@ironflow.com&su=${subject}&body=${body}`;
         
-        // DETECTION LOGIC: Listen for the user to return to the tab
+        // Open Gmail in a new tab
+        const gmailWindow = window.open(gmailUrl, '_blank');
+        
+        // DETECTION LOGIC: Trigger success when they return to this tab OR close the Gmail tab
         const handleReturn = () => {
           setIsSubmitted(true);
           window.removeEventListener('focus', handleReturn);
+          if (checkInterval) clearInterval(checkInterval);
         };
         
         window.addEventListener('focus', handleReturn);
-        
-        // Trigger the emailer
-        window.location.href = mailtoUrl;
+
+        // Also poll for window closure as a secondary detection
+        const checkInterval = setInterval(() => {
+          if (gmailWindow && gmailWindow.closed) {
+            handleReturn();
+          }
+        }, 500);
       }
     } catch (error) {
       console.error('Error:', error);

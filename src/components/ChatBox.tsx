@@ -116,24 +116,32 @@ export default function ChatBox() {
             `Message:\n${args.message || 'No additional message'}`
           );
           
-          const mailtoUrl = `mailto:service@ironflow.com?subject=${subject}&body=${body}`;
+          // Gmail Compose URL
+          const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=service@ironflow.com&su=${subject}&body=${body}`;
           
           // 1. Show "Opening" message
-          const openingText = "I'VE OPENED YOUR EMAILER. PLEASE SEND THE REQUEST TO FINALIZE YOUR BOOKING.";
+          const openingText = "I'VE OPENED GMAIL IN A NEW TAB. PLEASE SEND THE REQUEST THERE TO FINALIZE YOUR BOOKING.";
           setMessages(prev => [...prev, { role: 'model', text: openingText }]);
 
-          // 2. DETECTION LOGIC: Listen for the user to return to the tab
+          // 2. Open Gmail in a new tab
+          const gmailWindow = window.open(gmailUrl, '_blank');
+
+          // 3. DETECTION LOGIC: Listen for return or closure
           const handleReturn = () => {
             const modelText = "REQUEST SUCCESSFULLY PROCESSED! Thank you for choosing IRONFLOW. Marcus or one of our expert dispatchers will reach out to you within 10 minutes. We appreciate your trust in our family business!";
             setMessages(prev => [...prev, { role: 'model', text: modelText }]);
             setChatHistory(prev => [...prev, { role: 'model', parts: [{ text: modelText }] }]);
             window.removeEventListener('focus', handleReturn);
+            if (checkInterval) clearInterval(checkInterval);
           };
           
           window.addEventListener('focus', handleReturn);
 
-          // 3. Trigger email client
-          window.location.href = mailtoUrl;
+          const checkInterval = setInterval(() => {
+            if (gmailWindow && gmailWindow.closed) {
+              handleReturn();
+            }
+          }, 500);
         }
       } else {
         const modelText = response.text || "I'm sorry, I couldn't process that. How else can I help?";
