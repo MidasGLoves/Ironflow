@@ -118,12 +118,22 @@ export default function ChatBox() {
           
           const mailtoUrl = `mailto:service@ironflow.com?subject=${subject}&body=${body}`;
           
-          // Open email client
-          window.location.href = mailtoUrl;
+          // 1. Show "Opening" message
+          const openingText = "I'VE OPENED YOUR EMAILER. PLEASE SEND THE REQUEST TO FINALIZE YOUR BOOKING.";
+          setMessages(prev => [...prev, { role: 'model', text: openingText }]);
 
-          const modelText = "Your service request has been successfully processed! Thank you for trusting IRONFLOW with your home. Your email application is opening now with a copy of your details. Marcus or one of our dispatchers will call you within 10 minutes to finalize everything. Is there anything else I can assist you with today?";
-          setMessages(prev => [...prev, { role: 'model', text: modelText }]);
-          setChatHistory(prev => [...prev, { role: 'model', parts: [{ text: modelText }] }]);
+          // 2. DETECTION LOGIC: Listen for the user to return to the tab
+          const handleReturn = () => {
+            const modelText = "REQUEST SUCCESSFULLY PROCESSED! Thank you for choosing IRONFLOW. Marcus or one of our expert dispatchers will reach out to you within 10 minutes. We appreciate your trust in our family business!";
+            setMessages(prev => [...prev, { role: 'model', text: modelText }]);
+            setChatHistory(prev => [...prev, { role: 'model', parts: [{ text: modelText }] }]);
+            window.removeEventListener('focus', handleReturn);
+          };
+          
+          window.addEventListener('focus', handleReturn);
+
+          // 3. Trigger email client
+          window.location.href = mailtoUrl;
         }
       } else {
         const modelText = response.text || "I'm sorry, I couldn't process that. How else can I help?";

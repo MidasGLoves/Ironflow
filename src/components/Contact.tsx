@@ -5,6 +5,8 @@ import { Phone, Mail, MapPin, Send, CheckCircle, Loader2 } from 'lucide-react';
 export default function Contact({ preselectedService }: { preselectedService: string | null }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showEmailer, setShowEmailer] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -24,7 +26,6 @@ export default function Contact({ preselectedService }: { preselectedService: st
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      // 1. Save to database for records
       const res = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -32,7 +33,6 @@ export default function Contact({ preselectedService }: { preselectedService: st
       });
 
       if (res.ok) {
-        // 2. Construct mailto link
         const subject = encodeURIComponent(`Service Request: ${formData.service} - ${formData.name}`);
         const body = encodeURIComponent(
           `New Service Request Details:\n\n` +
@@ -45,13 +45,19 @@ export default function Contact({ preselectedService }: { preselectedService: st
         
         const mailtoUrl = `mailto:service@ironflow.com?subject=${subject}&body=${body}`;
         
-        // 3. Open email client
-        window.location.href = mailtoUrl;
+        // DETECTION LOGIC: Listen for the user to return to the tab
+        const handleReturn = () => {
+          setIsSubmitted(true);
+          window.removeEventListener('focus', handleReturn);
+        };
         
-        setIsSubmitted(true);
+        window.addEventListener('focus', handleReturn);
+        
+        // Trigger the emailer
+        window.location.href = mailtoUrl;
       }
     } catch (error) {
-      console.error('Error submitting form:', error);
+      console.error('Error:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -199,7 +205,7 @@ export default function Contact({ preselectedService }: { preselectedService: st
                   </div>
                   <h3 className="font-display text-4xl font-black text-midnight mb-4">REQUEST SUCCESSFULLY PROCESSED!</h3>
                   <p className="text-steel text-lg mb-8">
-                    Thank you for choosing IRONFLOW. Your details have been saved, and your emailer is opening now. 
+                    Thank you for choosing IRONFLOW. Your request has been sent successfully. 
                     Marcus or one of our expert dispatchers will reach out to you within 10 minutes. We appreciate your trust in our family business!
                   </p>
                   <button 
